@@ -2,71 +2,71 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chuyển đổi ghi âm sang Word</title>
+    <title>Chuyển đổi Giọng nói sang Word</title>
     <style>
-        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
-        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
-        h2 { color: #d32f2f; margin-bottom: 20px; }
-        input[type="file"] { margin: 20px 0; display: block; }
-        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
-        button:hover { background-color: #0056b3; }
-        #status { margin-top: 15px; font-weight: bold; }
+        body { font-family: Arial, sans-serif; padding: 20px; line-height: 1.6; }
+        textarea { width: 100%; height: 300px; margin-top: 10px; padding: 10px; }
+        .controls { margin-bottom: 20px; }
+        button { padding: 10px 20px; cursor: pointer; margin-right: 10px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>Ủy ban MTTQ Việt Nam Phường An Khánh - Tp.HCM</h2>
-    <p>Chọn file ghi âm để chuyển sang định dạng Word (.docx)</p>
-    
-    <input type="file" id="audioFile" accept="audio/*">
-    <button onclick="uploadAndConvert()">Xử lý chuyển đổi</button>
-    
-    <div id="status"></div>
-</div>
+    <h1>Ủy ban MTTQ Việt Nam Phường An Khánh - TP.HCM</h1>
+    <p>Nhấn "Bắt đầu ghi âm" để nói, sau đó nhấn "Tải về file Word".</p>
 
-<script>
-    async function uploadAndConvert() {
-        const fileInput = document.getElementById('audioFile');
-        const status = document.getElementById('status');
-        
-        if (!fileInput.files[0]) {
-            alert("Vui lòng chọn file ghi âm!");
-            return;
-        }
+    <div class="controls">
+        <button id="startBtn">🎤 Bắt đầu ghi âm</button>
+        <button id="stopBtn" disabled>⏹️ Dừng ghi âm</button>
+        <button id="saveBtn">💾 Tải về file Word</button>
+    </div>
 
-        status.innerText = "Đang tải và xử lý, vui lòng chờ...";
-        
-        const formData = new FormData();
-        formData.append('audio', fileInput.files[0]);
+    <textarea id="output" placeholder="Văn bản sẽ hiển thị ở đây..."></textarea>
 
-        try {
-            // Thay thế '/upload' bằng URL backend xử lý của bạn
-            const response = await fetch('/upload', {
-                method: 'POST',
-                body: formData
-            });
+    <script>
+        const output = document.getElementById('output');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const saveBtn = document.getElementById('saveBtn');
 
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = "Van_ban_chuyen_doi.docx";
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                status.innerText = "Hoàn tất! Đang tải file về máy.";
-            } else {
-                status.innerText = "Có lỗi xảy ra trong quá trình xử lý.";
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.lang = 'vi-VN'; // Thiết lập tiếng Việt
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                transcript += event.results[i][0].transcript;
             }
-        } catch (error) {
-            status.innerText = "Không thể kết nối đến máy chủ.";
-            console.error(error);
-        }
-    }
-</script>
+            output.value = transcript;
+        };
 
+        startBtn.onclick = () => {
+            recognition.start();
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+        };
+
+        stopBtn.onclick = () => {
+            recognition.stop();
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        };
+
+        saveBtn.onclick = () => {
+            const content = output.value;
+            const header = "Ủy ban MTTQ Việt Nam Phường An Khánh - TP.HCM\n\n";
+            const fullText = header + content;
+            
+            // Tạo blob để tải file
+            const blob = new Blob([fullText], {type: 'application/msword'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Van_Ban_MTTQ.doc';
+            a.click();
+        };
+    </script>
 </body>
 </html>
