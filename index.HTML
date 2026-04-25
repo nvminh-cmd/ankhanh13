@@ -2,72 +2,41 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chuyển đổi Giọng nói thành Văn bản</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: auto; background-color: #f4f4f9; }
-        h1 { color: #d32f2f; text-align: center; }
-        .controls { text-align: center; margin-bottom: 20px; }
-        button { padding: 10px 20px; font-size: 16px; cursor: pointer; margin: 5px; border: none; border-radius: 5px; }
-        #startBtn { background-color: #4CAF50; color: white; }
-        #stopBtn { background-color: #f44336; color: white; }
-        #result { width: 100%; height: 300px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
-        .status { text-align: center; margin-top: 10px; font-weight: bold; color: #555; }
-    </style>
+    <title>Chuyển đổi Ghi âm sang Word</title>
 </head>
 <body>
-
-    <h1>Ủy ban MTTQ Việt Nam Phường An Khánh - TP.HCM</h1>
-    <div class="controls">
-        <button id="startBtn">🎤 Bắt đầu ghi âm</button>
-        <button id="stopBtn">⏹ Dừng ghi âm</button>
+    <div style="text-align: center; margin-top: 50px;">
+        <h2>Ủy ban MTTQ Việt Nam Phường An Khánh - Tp.HCM</h2>
+        <h3>Công cụ chuyển đổi Ghi âm thành Văn bản (Word)</h3>
+        
+        <input type="file" id="audioFile" accept="audio/*">
+        <button onclick="uploadAndConvert()">Xử lý chuyển đổi</button>
+        
+        <div id="status"></div>
     </div>
-    <div class="status" id="status">Trạng thái: Đang chờ...</div>
-    <textarea id="result" placeholder="Văn bản sẽ hiển thị tại đây..."></textarea>
 
     <script>
-        const startBtn = document.getElementById('startBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const resultText = document.getElementById('result');
-        const statusDiv = document.getElementById('status');
+        async function uploadAndConvert() {
+            const fileInput = document.getElementById('audioFile');
+            const file = fileInput.files[0];
+            if (!file) return alert("Vui lòng chọn file ghi âm!");
 
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const formData = new FormData();
+            formData.append('audio', file);
 
-        if (!SpeechRecognition) {
-            alert("Trình duyệt của bạn không hỗ trợ tính năng chuyển giọng nói thành văn bản. Vui lòng sử dụng Google Chrome hoặc Edge.");
-        } else {
-            const recognition = new SpeechRecognition();
-            recognition.lang = 'vi-VN'; // Cài đặt ngôn ngữ tiếng Việt
-            recognition.continuous = true; // Ghi âm liên tục
-            recognition.interimResults = true; // Hiển thị kết quả tạm thời
+            document.getElementById('status').innerText = "Đang xử lý, vui lòng chờ...";
 
-            recognition.onstart = () => {
-                statusDiv.innerText = "Trạng thái: Đang ghi âm...";
-            };
-
-            recognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    transcript += event.results[i][0].transcript;
-                }
-                resultText.value = transcript;
-            };
-
-            recognition.onerror = (event) => {
-                statusDiv.innerText = "Lỗi: " + event.error;
-            };
-
-            recognition.onend = () => {
-                statusDiv.innerText = "Trạng thái: Đã dừng.";
-            };
-
-            startBtn.addEventListener('click', () => {
-                recognition.start();
-            });
-
-            stopBtn.addEventListener('click', () => {
-                recognition.stop();
-            });
+            // Gửi file đến server Python/Node.js của bạn
+            const response = await fetch('/upload', { method: 'POST', body: formData });
+            const blob = await response.blob();
+            
+            // Tải file về máy
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = "Van_ban_chuyen_doi.docx";
+            a.click();
+            document.getElementById('status').innerText = "Hoàn tất!";
         }
     </script>
 </body>
