@@ -2,42 +2,71 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Chuyển đổi Ghi âm sang Word</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chuyển đổi ghi âm sang Word</title>
+    <style>
+        body { font-family: Arial, sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background-color: #f4f4f9; }
+        .container { background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: center; }
+        h2 { color: #d32f2f; margin-bottom: 20px; }
+        input[type="file"] { margin: 20px 0; display: block; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        #status { margin-top: 15px; font-weight: bold; }
+    </style>
 </head>
 <body>
-    <div style="text-align: center; margin-top: 50px;">
-        <h2>Ủy ban MTTQ Việt Nam Phường An Khánh - Tp.HCM</h2>
-        <h3>Công cụ chuyển đổi Ghi âm thành Văn bản (Word)</h3>
+
+<div class="container">
+    <h2>Ủy ban MTTQ Việt Nam Phường An Khánh - Tp.HCM</h2>
+    <p>Chọn file ghi âm để chuyển sang định dạng Word (.docx)</p>
+    
+    <input type="file" id="audioFile" accept="audio/*">
+    <button onclick="uploadAndConvert()">Xử lý chuyển đổi</button>
+    
+    <div id="status"></div>
+</div>
+
+<script>
+    async function uploadAndConvert() {
+        const fileInput = document.getElementById('audioFile');
+        const status = document.getElementById('status');
         
-        <input type="file" id="audioFile" accept="audio/*">
-        <button onclick="uploadAndConvert()">Xử lý chuyển đổi</button>
-        
-        <div id="status"></div>
-    </div>
-
-    <script>
-        async function uploadAndConvert() {
-            const fileInput = document.getElementById('audioFile');
-            const file = fileInput.files[0];
-            if (!file) return alert("Vui lòng chọn file ghi âm!");
-
-            const formData = new FormData();
-            formData.append('audio', file);
-
-            document.getElementById('status').innerText = "Đang xử lý, vui lòng chờ...";
-
-            // Gửi file đến server Python/Node.js của bạn
-            const response = await fetch('/upload', { method: 'POST', body: formData });
-            const blob = await response.blob();
-            
-            // Tải file về máy
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = "Van_ban_chuyen_doi.docx";
-            a.click();
-            document.getElementById('status').innerText = "Hoàn tất!";
+        if (!fileInput.files[0]) {
+            alert("Vui lòng chọn file ghi âm!");
+            return;
         }
-    </script>
+
+        status.innerText = "Đang tải và xử lý, vui lòng chờ...";
+        
+        const formData = new FormData();
+        formData.append('audio', fileInput.files[0]);
+
+        try {
+            // Thay thế '/upload' bằng URL backend xử lý của bạn
+            const response = await fetch('/upload', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = "Van_ban_chuyen_doi.docx";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                status.innerText = "Hoàn tất! Đang tải file về máy.";
+            } else {
+                status.innerText = "Có lỗi xảy ra trong quá trình xử lý.";
+            }
+        } catch (error) {
+            status.innerText = "Không thể kết nối đến máy chủ.";
+            console.error(error);
+        }
+    }
+</script>
+
 </body>
 </html>
